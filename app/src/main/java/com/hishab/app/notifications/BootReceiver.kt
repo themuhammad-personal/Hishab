@@ -3,7 +3,7 @@ package com.hishab.app.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.hishab.app.data.settings.SettingsRepository
+import com.hishab.app.HishabApplication
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
@@ -15,8 +15,9 @@ class BootReceiver : BroadcastReceiver() {
         val pending = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val enabled = SettingsRepository(context).settings.firstOrNull()?.remindersEnabled == true
-                ReminderScheduler(context).schedule(enabled)
+                val container = (context.applicationContext as HishabApplication).container
+                val enabled = container.settings.settings.firstOrNull()?.remindersEnabled == true
+                container.reminders.schedule(enabled)
             } finally { pending.finish() }
         }
     }

@@ -4,11 +4,16 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
+import android.app.PendingIntent
 import android.content.pm.PackageManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.work.*
+import com.hishab.app.HishabApplication
+import com.hishab.app.MainActivity
+import com.hishab.app.R
 import com.hishab.app.core.Dates
 import com.hishab.app.core.Money
 import com.hishab.app.data.local.HishabDatabase
@@ -36,7 +41,7 @@ class ReminderScheduler(private val context: Context) {
 
 class DueReminderWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        val db = HishabDatabase.create(applicationContext)
+        val db = (applicationContext as HishabApplication).container.database
         return try {
             val transactions = db.transactions().observe().firstOrNull().orEmpty().filter { it.deletedAt == null && it.dueDirection != null }
             val payments = db.payments().observe().firstOrNull().orEmpty().groupBy { it.transactionId }.mapValues { e -> e.value.sumOf { it.amountPoisha } }
@@ -48,17 +53,18 @@ class DueReminderWorker(context: Context, params: WorkerParameters) : CoroutineW
             }
             if (due.isNotEmpty()) post(due.size, due.sumOf { it.amountPoisha - (payments[it.id] ?: 0L) })
             Result.success()
-        } catch (_: Exception) { Result.retry() } finally { db.close() }
+        } catch (_: Exception) { Result.retry() }
     }
     private fun post(count: Int, total: Long) {
         val nm = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         nm.createNotificationChannel(NotificationChannel(ReminderScheduler.CHANNEL, "বাকির রিমাইন্ডার", NotificationManager.IMPORTANCE_DEFAULT))
         if (ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
         val notification = NotificationCompat.Builder(applicationContext, ReminderScheduler.CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(PendingIntent.getActivity(applicationContext, 0, Intent(applicationContext, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE))
             .setContentTitle("বাকি মনে করিয়ে দেওয়া")
             .setContentText("${count}টি বাকি · মোট ${Money.formatPoisha(total)}")
-            .setStyle(NotificationCompat.BigTextStyle().bigText("আজ/আগামীকালের মধ্যে পরিশোধযোগ্য বাকি আছে। হিসাব অ্যাপে বিস্তারিত দেখুন।"))
+            .setStyle(NotificationCompat.BigTextStyle().bigText("আজ/আগামীকালের মধ্যে দেনা বা পাওনা আছে। হিসাব অ্যাপে বিস্তারিত দেখুন।"))
             .setAutoCancel(true)
             .build()
         NotificationManagerCompat.from(applicationContext).notify(1001, notification)

@@ -86,9 +86,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun setCloudConsent(value: Boolean) = run({ settingsRepo.setCloudAiConsent(value) })
 
     fun addTransaction(kind: EntryKind, title: String, amount: Long, categoryId: String, walletId: String?, date: String, paid: Boolean, dueDate: String?, shop: String?, qty: Long?, unit: String?, unitPrice: Long?, note: String?, todoId: String? = null) =
-        run({ ledger.addTransaction(kind, title, amount, categoryId, walletId, date, paid, dueDate, shop, qty, unit, unitPrice, note, todoId) }, "হিসাব সংরক্ষণ হয়েছে")
-    fun updateTransaction(id: String, edit: (com.hishab.app.data.local.TransactionEntity) -> com.hishab.app.data.local.TransactionEntity) = run({ ledger.updateTransaction(id, edit) }, "লেনদেন আপডেট হয়েছে")
-    fun deleteTransaction(id: String) = run({ ledger.softDeleteTransaction(id) }, "লেনদেন মুছে ফেলা হয়েছে", undo = { run({ ledger.restoreTransaction(id) }, "লেনদেন ফিরিয়ে আনা হয়েছে") })
+        run({
+            val id = ledger.addTransaction(kind, title, amount, categoryId, walletId, date, paid, dueDate, shop, qty, unit, unitPrice, note, todoId)
+            emitBudgetCrossings(id)
+        }, "হিসাব সংরক্ষণ হয়েছে")
+    fun updateTransaction(id: String, edit: (com.hishab.app.data.local.TransactionEntity) -> com.hishab.app.data.local.TransactionEntity) = run({ ledger.updateTransaction(id, edit); emitBudgetCrossings(id) }, "লেনদেন আপডেট হয়েছে")
+    fun deleteTransaction(id: String) = run({ ledger.softDeleteTransaction(id); emitBudgetCrossings(id) }, "লেনদেন মুছে ফেলা হয়েছে", undo = { run({ ledger.restoreTransaction(id); emitBudgetCrossings(id) }, "লেনদেন ফিরিয়ে আনা হয়েছে") })
     fun addPayment(txId: String, walletId: String, amount: Long, date: String, note: String?) = run({ ledger.addPayment(txId, walletId, amount, date, note) }, "পরিশোধ সংরক্ষণ হয়েছে")
     fun deletePayment(id: String) {
         val payment = state.value.snapshot.payments.firstOrNull { it.id == id }
@@ -123,6 +126,35 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             is AssistantDraft.DeleteTransaction -> deleteTransaction(draft.transactionId)
         }
         _chat.value = _chat.value + ChatMessage("assistant", "নিশ্চিতকরণ পাওয়া গেছে; কাজটি সম্পন্ন হলে বার্তা দেখাবে।")
+    }
+
+    private suspend fun emitBudgetCrossings(transactionId: String) {
+        runCatching {
+            val snap = ledger.snapshot.first()
+            val tx = snap.transactions.firstOrNull { it.id == transactionId } ?: return@runCatching
+            if (tx.kind != EntryKind.EXPENSE) return@runCatching
+            val monthKey = Dates.monthKey(Dates.requireDate(tx.date))
+            val overallLimit = snap.budgets.firstOrNull { it.monthKey == monthKey }?.overallLimitPoisha ?: 0L
+            val categoryLimit = snap.categoryBudgets.firstOrNull { it.monthKey == monthKey && it.categoryId == tx.categoryId }?.limitPoisha ?: 0L
+            val checks = buildList {
+                if (overallLimit > 0) add(Triple("overall/$monthKey", "মাসের বাজেট", Accounting.overallBudget(monthKey, overallLimit, snap.transactions, snap.payments)))
+                if (categoryLimit > 0) {
+                    val category = snap.categories.firstOrNull { it.id == tx.categoryId }
+                    if (category != null) add(Triple("category/$monthKey/${tx.categoryId}", category.name, Accounting.categoryBudget(monthKey, category, categoryLimit, snap.transactions, snap.payments)))
+                }
+            }
+            checks.forEach { (key, label, budget) ->
+                val previous = budgetWarningLevels[key]
+                if (budget.warning == BudgetWarning.NONE) budgetWarningLevels.remove(key)
+                else {
+                    budgetWarningLevels[key] = budget.warning
+                    if (previous == null || budget.warning.ordinal > previous.ordinal) {
+                        val text = if (budget.warning == BudgetWarning.FULL) "$label: সীমা পূর্ণ বা অতিক্রম করেছে (${money(budget.spent)} / ${money(budget.limit)})" else "$label: ৮০% সতর্কতা পেরিয়েছে (${money(budget.spent)} / ${money(budget.limit)})"
+                        _events.send(AppEvent(text))
+                    }
+                }
+            }
+        }
     }
 
     fun exportJson(uri: Uri) = run({

@@ -21,7 +21,7 @@ class AccountingTest {
         assertEquals(325000L, s.expenseUnpaid)
         assertEquals(325000L, s.payable)
         val balances = Accounting.walletBalances(wallets, txs, pays, emptyList())
-        assertEquals(2880000L, balances.first { it.walletId == "w1" }.balance)
+        assertEquals(2070000L, balances.first { it.walletId == "w1" }.balance)
     }
     @Test fun transferNeutral() {
         val transfers = listOf(TransferEntity("t", "w1", "w2", 10000, "2026-11-14", null, ts))

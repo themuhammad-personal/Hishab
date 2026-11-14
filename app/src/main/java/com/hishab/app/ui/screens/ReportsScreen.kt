@@ -2,7 +2,6 @@
 
 package com.hishab.app.ui.screens
 
-import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -22,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import com.hishab.app.core.Dates
 import com.hishab.app.domain.Accounting
 import com.hishab.app.domain.ReportMath
+import java.time.YearMonth
 import com.hishab.app.ui.AppViewModel
 import com.hishab.app.ui.UiState
-import com.hishab.app.ui.components.SectionHeader
 import com.hishab.app.ui.theme.HishabTheme
 
 @Composable
@@ -50,6 +49,7 @@ fun ReportsScreen(vm: AppViewModel, state: UiState) {
             Surface(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth().padding(top = 14.dp)) {
                 Column(Modifier.padding(18.dp)) {
                     Text("ক্যাটাগরি অনুযায়ী", style = MaterialTheme.typography.titleMedium)
+                    if (slices.isEmpty()) Text("এই মাসে কোনো খরচ নেই।", style = MaterialTheme.typography.bodySmall, color = HishabTheme.colors.muted, modifier = Modifier.padding(top = 12.dp))
                     Row(Modifier.fillMaxWidth().padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(150.dp), contentAlignment = Alignment.Center) {
                             Canvas(Modifier.fillMaxSize()) {
@@ -77,9 +77,11 @@ fun ReportsScreen(vm: AppViewModel, state: UiState) {
         item {
             Surface(shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth().padding(top = 14.dp)) {
                 Column(Modifier.padding(18.dp)) {
-                    Text("শেষ ৭ দিনের খরচ", style = MaterialTheme.typography.titleMedium)
                     val today = Dates.today()
-                    val days = (6 downTo 0).map { today.minusDays(it.toLong()) }
+                    val currentMonth = Dates.monthKey(today) == state.monthKey
+                    val anchor = if (currentMonth) today else YearMonth.parse(state.monthKey).atEndOfMonth()
+                    Text(if (currentMonth) "শেষ ৭ দিনের খরচ" else "${vm.monthLabel()} · শেষ ৭ দিন", style = MaterialTheme.typography.titleMedium)
+                    val days = (6 downTo 0).map { anchor.minusDays(it.toLong()) }
                     val values = days.map { d -> snap.activeTransactions.filter { it.kind == com.hishab.app.domain.EntryKind.EXPENSE && it.date == d.toString() }.sumOf { it.amountPoisha } }
                     val max = values.maxOrNull()?.coerceAtLeast(1) ?: 1
                     val barTrack = HishabTheme.colors.primarySoft
