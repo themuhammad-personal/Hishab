@@ -36,8 +36,8 @@ jobs:
           from pathlib import Path
           p = Path('gradle-ci.log')
           lines = p.read_text(errors='replace').splitlines() if p.exists() else []
-          picks = [l for l in lines if re.search(r'^e:|error:|FAILURE|What went wrong|Execution failed|Could not|Unresolved reference|Type mismatch|None of the following|Cannot|A problem|lint found|Errors:|Warnings:|Caused by:', l)]
-          msg = '\n'.join(picks[-160:]) or '\n'.join(lines[-160:])
+          picks = [l for l in lines if re.search(r'^e:|error:|FAILURE|What went wrong|Execution failed|Could not|Unresolved reference|Type mismatch|None of the following|Cannot|A problem|lint found|Errors:|Warnings:|Caused by:|^> |^\* ', l)]
+          msg = '\n'.join(picks[-220:]) + '\n---TAIL---\n' + '\n'.join(lines[-220:])
           msg = msg.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
           print('::error::' + msg[:60000])
           PY
