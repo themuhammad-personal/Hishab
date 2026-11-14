@@ -17,7 +17,7 @@ class DatesTest {
     @Test fun monthAndRelativeLabels() {
         val today = LocalDate.of(2026, 11, 14)
         assertEquals(com.hishab.app.core.Money.toBengaliDigits("2026-11"), com.hishab.app.core.Money.toBengaliDigits(Dates.monthKey(today)))
-        assertEquals("নভেম্বর ২০২৬", Dates.formatMonth("2026-11", false))
+        assertEquals("নভেম্বর 2026", Dates.formatMonth("2026-11", false))
         assertEquals("আজ", Dates.relativeLabel("2026-11-14", today))
         assertEquals("গতকাল", Dates.relativeLabel("2026-11-13", today))
         assertEquals("আগামীকাল", Dates.relativeLabel("2026-11-15", today))

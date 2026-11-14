@@ -1,6 +1,6 @@
 # হিসাব / Hishab — চূড়ান্ত ইমপ্লিমেন্টেশন পরিকল্পনা
 
-**স্ট্যাটাস:** অনুমোদনের অপেক্ষায়। এই নথি লেখা পর্যন্ত কোনো অ্যাপ কোড পরিবর্তন, commit, push বা release করা হয়নি।  
+**স্ট্যাটাস:** অনুমোদিত। ঐচ্ছিক v1 scope: swipe edit/delete + undo, ৬০+ icon picker, item-wise category insight অন্তর্ভুক্ত; PIN/biometric lock ও Drive appDataFolder backup deferred; PDF বাদ। বাস্তবায়ন ও CI যাচাই চলমান; signed release শুধু signing secrets যোগের পর।  
 **ভিত্তি:** ২৪টি ব্যবহারকারী-সিদ্ধান্ত + `docs/review/CODE_AUDIT.md` + `docs/design/DESIGN_SPEC.md` + ১২-স্ক্রিন মকআপ।
 
 ---
@@ -108,7 +108,8 @@
 6. Signed release workflow + secrets guide + release।
 7. Dead-file cleanup + README + final verification।
 
-## ১২. এখন যেসব অনুমোদন দরকার
+## ১২. অনুমোদনের ফলাফল
 
-- সামগ্রিক মকআপ ও এই পরিকল্পনা অনুমোদন।
-- ঐচ্ছিক লেগ্যাসি/রোডম্যাপ ফিচার: কোন সেট v1-এ ঢুকবে (swipe/undo, icon picker, item insight, app lock, Drive backup)। ডিফল্ট প্রস্তাব: প্রথম তিনটি অন্তর্ভুক্ত, app lock ও Drive backup defer।
+- সামগ্রিক মকআপ ও পরিকল্পনা অনুমোদিত।
+- ঐচ্ছিক ফিচার সিদ্ধান্ত: swipe/undo, ৬০+ icon picker, item-wise insight v1-এ অন্তর্ভুক্ত; app lock ও Drive backup deferred; PDF বাদ।
+- বাকি external dependency: release signing secrets ব্যবহারকারীকে GitHub UI-তে যোগ করতে হবে; secret না থাকলে release workflow fail-fast করবে।
