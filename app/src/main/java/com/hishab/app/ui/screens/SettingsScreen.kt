@@ -33,7 +33,7 @@ fun SettingsScreen(vm: AppViewModel, state: UiState) {
     var reset by rememberSaveable { mutableStateOf(false) }
     val jsonExport = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let(vm::exportJson) }
     val csvExport = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri -> uri?.let(vm::exportCsv) }
-    val import = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { preview = vm.readBackup(it) } }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { preview = vm.readBackup(it) } }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> vm.setReminders(granted) }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentPadding = PaddingValues(bottom = 32.dp)) {
         item { SectionHeader("চেহারা ও ভাষা") }
@@ -64,7 +64,7 @@ fun SettingsScreen(vm: AppViewModel, state: UiState) {
         item {
             SettingsAction(Icons.Default.Download, "JSON ব্যাকআপ", "সম্পূর্ণ খাতা ফাইলে সংরক্ষণ") { jsonExport.launch("hishab-backup-${state.monthKey}.json") }
             SettingsAction(Icons.Default.Description, "CSV এক্সপোর্ট", "স্প্রেডশিটের জন্য · UTF-8") { csvExport.launch("hishab-${state.monthKey}.csv") }
-            SettingsAction(Icons.Default.Upload, "ব্যাকআপ রিস্টোর", "আগে যাচাই ও প্রিভিউ, তারপর মার্জ/রিপ্লেস") { import.launch(arrayOf("application/json", "text/plain", "*/*")) }
+            SettingsAction(Icons.Default.Upload, "ব্যাকআপ রিস্টোর", "আগে যাচাই ও প্রিভিউ, তারপর মার্জ/রিপ্লেস") { importLauncher.launch(arrayOf("application/json", "text/plain", "*/*")) }
             SettingsAction(Icons.Default.Delete, "খাতা রিসেট", "সব লেনদেন, ওয়ালেট, ক্যাটাগরি ও বাজেট মুছবে", destructive = true) { reset = true }
         }
         item { SectionHeader("গোপনীয়তা ও ক্লাউড") }
