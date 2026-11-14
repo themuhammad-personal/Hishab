@@ -109,6 +109,45 @@ class LedgerRepositoryTest {
         try { block(); fail("Expected IllegalArgumentException") } catch (_: IllegalArgumentException) { }
     }
 
+    @Test fun editingPaidAmountCreatesDueAndKindIsLocked() = runBlocking {
+        val snap = repo.snapshot.first()
+        val wallet = snap.activeWallets.first()
+        val expenseCat = snap.activeCategories.first { it.kind == EntryKind.EXPENSE }
+        val incomeCat = snap.activeCategories.first { it.kind == EntryKind.INCOME }
+        val id = repo.addTransaction(EntryKind.EXPENSE, "পরিশোধিত", 1000, expenseCat.id, wallet.id, "2026-11-14", true, null, null, null, null, null, null)
+        repo.updateTransaction(id) { it.copy(amountPoisha = 2000) }
+        val edited = repo.snapshot.first().transactions.first { it.id == id }
+        assertEquals(1000L, repo.snapshot.first().remaining(edited))
+        assertEquals(com.hishab.app.domain.DueDirection.PAYABLE, edited.dueDirection)
+        assertNotNull(edited.dueDate)
+        expectIllegalArgumentException { repo.updateTransaction(id) { it.copy(kind = EntryKind.INCOME, categoryId = incomeCat.id) } }
+    }
+
+    @Test fun deletingInitialPaymentCreatesDue() = runBlocking {
+        val snap = repo.snapshot.first()
+        val wallet = snap.activeWallets.first()
+        val cat = snap.activeCategories.first { it.kind == EntryKind.EXPENSE }
+        val id = repo.addTransaction(EntryKind.EXPENSE, "পরিশোধিত", 1000, cat.id, wallet.id, "2026-11-14", true, null, null, null, null, null, null)
+        val payment = repo.snapshot.first().payments.first { it.transactionId == id }
+        repo.deletePayment(payment.id)
+        val after = repo.snapshot.first()
+        val tx = after.transactions.first { it.id == id }
+        assertEquals(1000L, after.remaining(tx))
+        assertEquals(com.hishab.app.domain.DueDirection.PAYABLE, tx.dueDirection)
+    }
+
+    @Test fun mergeRejectsKindFlipWithPaymentHistory() = runBlocking {
+        val snap = repo.snapshot.first()
+        val wallet = snap.activeWallets.first()
+        val expenseCat = snap.activeCategories.first { it.kind == EntryKind.EXPENSE }
+        val incomeCat = snap.activeCategories.first { it.kind == EntryKind.INCOME }
+        repo.addTransaction(EntryKind.EXPENSE, "খরচ", 1000, expenseCat.id, wallet.id, "2026-11-14", true, null, null, null, null, null, null)
+        val preview = backup.parse(backup.export())
+        val flipped = preview.document.copy(transactions = preview.document.transactions.map { it.copy(kind = EntryKind.INCOME, categoryId = incomeCat.id) })
+        backup.validate(flipped)
+        expectIllegalArgumentException { backup.import(com.hishab.app.data.repository.BackupPreview(flipped, emptyList()), replace = false) }
+    }
+
     @Test fun backupRoundTripReplaceAndMerge() = runBlocking {
         val snap = repo.snapshot.first()
         val cat = snap.activeCategories.first { it.kind == EntryKind.EXPENSE }

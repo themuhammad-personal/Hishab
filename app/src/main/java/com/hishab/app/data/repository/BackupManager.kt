@@ -197,6 +197,14 @@ class BackupManager(private val db: HishabDatabase, private val settings: Settin
         val current = readDocument()
         fun <T> merge(old: List<T>, new: List<T>, key: (T) -> String): List<T> =
             (old.associateBy(key) + new.associateBy(key)).values.toList()
+        val currentTx = current.transactions.associateBy { it.id }
+        val currentPayments = current.duePayments.groupBy { it.transactionId }
+        incoming.transactions.forEach { t ->
+            val old = currentTx[t.id]
+            if (old != null && old.kind != t.kind && (!currentPayments[t.id].isNullOrEmpty() || t.paidPoisha > 0)) {
+                throw IllegalArgumentException("পরিশোধের ইতিহাসসহ লেনদেনের ধরন মার্জ করে বদলানো যাবে না")
+            }
+        }
         return incoming.copy(
             wallets = merge(current.wallets, incoming.wallets) { it.id },
             categories = merge(current.categories, incoming.categories) { it.id },

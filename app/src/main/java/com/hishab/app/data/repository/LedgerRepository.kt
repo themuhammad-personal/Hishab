@@ -138,11 +138,13 @@ class LedgerRepository(
             candidate.dueDate?.let { Dates.requireDate(it) }
             val paid = db.payments().forTransaction(txId).sumOf { it.amountPoisha }
             require(paid <= candidate.amountPoisha) { "ইতিমধ্যে পরিশোধিত টাকার চেয়ে কম মোট পরিমাণ দেওয়া যাবে না" }
+            require(candidate.kind == old.kind) { "লেনদেনের ধরন বদলানো যাবে না; মুছে নতুন হিসাব যোগ করুন" }
             val category = db.categories().get(candidate.categoryId) ?: throw IllegalArgumentException("ক্যাটাগরি পাওয়া যায়নি")
             require(category.kind == candidate.kind) { "ক্যাটাগরির ধরন মিলছে না" }
             require(candidate.dueDirection == null || candidate.dueDirection == directionFor(candidate.kind)) { "বাকির ধরন লেনদেনের ধরনের সাথে মিলছে না" }
-            if (paid < candidate.amountPoisha) requireNotNull(candidate.dueDate ?: candidate.date) { "বাকির তারিখ দিন" }
-            db.transactions().upsert(candidate.copy(paidPoisha = paid))
+            val normalized = withDueDefaults(candidate.copy(paidPoisha = paid), paid)
+            if (paid < normalized.amountPoisha) requireNotNull(normalized.dueDate) { "বাকির তারিখ দিন" }
+            db.transactions().upsert(normalized)
         }
     }
 
@@ -158,7 +160,7 @@ class LedgerRepository(
             require(amountPoisha <= tx.amountPoisha - paid) { "বাকির চেয়ে বেশি পরিশোধ করা যাবে না" }
             val ts = now()
             db.payments().upsert(DuePaymentEntity(id(), txId, walletId, amountPoisha, date, note?.trim()?.ifBlank { null }, ts))
-            db.transactions().upsert(tx.copy(paidPoisha = paid + amountPoisha, updatedAt = ts))
+            db.transactions().upsert(withDueDefaults(tx.copy(paidPoisha = paid + amountPoisha, updatedAt = ts), paid + amountPoisha))
         }
     }
 
@@ -230,7 +232,7 @@ class LedgerRepository(
         val ts = now()
         val old = categoryId?.let { db.categories().get(it) }
         if (old != null && old.kind != kind) {
-            val used = db.transactions().observeOnce().any { it.categoryId == categoryId && it.deletedAt == null }
+            val used = db.transactions().observeOnce().any { it.categoryId == categoryId } || db.todos().observeOnce().any { it.targetCategoryId == categoryId }
             require(!used) { "ব্যবহৃত ক্যাটাগরির ধরন বদলানো যাবে না; নতুন ক্যাটাগরি তৈরি করুন" }
         }
         db.categories().upsert(CategoryEntity(categoryId ?: id(), name.trim(), kind, color, icon, sortOrder, old?.archived ?: false, old?.createdAt ?: ts, ts))

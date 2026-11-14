@@ -47,7 +47,7 @@ fun HomeScreen(vm: AppViewModel, state: UiState, onNavigate: (String) -> Unit) {
             item {
                 Surface(color = MaterialTheme.colorScheme.primary, shape = MaterialTheme.shapes.extraLarge, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
                     Column(Modifier.padding(20.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("মাসের খরচ", color = MaterialTheme.colorScheme.onPrimary); AssistChip(onClick = {}, label = { Text("বাকিসহ") }) }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("মাসের খরচ", color = MaterialTheme.colorScheme.onPrimary); Surface(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .16f), shape = MaterialTheme.shapes.small) { Text("বাকিসহ", modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary) } }
                         Text(vm.money(summary.expenseTotal), style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onPrimary)
                         Spacer(Modifier.height(12.dp)); HorizontalDivider(color = MaterialTheme.colorScheme.onPrimary.copy(alpha = .25f)); Spacer(Modifier.height(12.dp))
                         Row(Modifier.fillMaxWidth()) {
