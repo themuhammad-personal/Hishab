@@ -66,7 +66,7 @@
 
 Debug APK: `app/build/outputs/apk/debug/`। Debug applicationId `com.hishab.app.debug`, release `com.hishab.app`।
 
-CI প্রতিটি push/PR-এ wrapper validation, lint, unit/Robolectric tests ও debug build চালায়। এই sandbox-এ JDK/Android SDK নেই, তাই compile/test যাচাই GitHub Actions-এ হয়েছে।
+CI প্রতিটি push/PR-এ wrapper validation, lint, unit/Robolectric tests, debug build এবং unsigned release R8 compile check চালায়। Room v1 schema `app/schemas/`-এ export ও সংরক্ষিত হয়। এই sandbox-এ JDK/Android SDK নেই, তাই compile/test যাচাই GitHub Actions-এ হয়েছে।
 
 ### Signed release
 

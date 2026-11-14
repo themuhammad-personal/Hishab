@@ -1,6 +1,6 @@
 # হিসাব / Hishab — চূড়ান্ত ইমপ্লিমেন্টেশন পরিকল্পনা
 
-**স্ট্যাটাস:** অনুমোদিত। ঐচ্ছিক v1 scope: swipe edit/delete + undo, ৬০+ icon picker, item-wise category insight অন্তর্ভুক্ত; PIN/biometric lock ও Drive appDataFolder backup deferred; PDF বাদ। বাস্তবায়ন ও CI যাচাই চলমান; signed release শুধু signing secrets যোগের পর।  
+**স্ট্যাটাস:** অনুমোদিত। ঐচ্ছিক v1 scope: swipe edit/delete + undo, ৬০+ icon picker, item-wise category insight অন্তর্ভুক্ত; PIN/biometric lock ও Drive appDataFolder backup deferred; PDF বাদ। বাস্তবায়ন সম্পন্ন; CI-তে lint, unit/Robolectric tests, debug build ও unsigned release R8 compile পাস করেছে। Signed release শুধু signing secrets যোগের পর।  
 **ভিত্তি:** ২৪টি ব্যবহারকারী-সিদ্ধান্ত + `docs/review/CODE_AUDIT.md` + `docs/design/DESIGN_SPEC.md` + ১২-স্ক্রিন মকআপ।
 
 ---
