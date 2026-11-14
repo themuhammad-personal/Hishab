@@ -82,12 +82,13 @@ fun ReportsScreen(vm: AppViewModel, state: UiState) {
                     val days = (6 downTo 0).map { today.minusDays(it.toLong()) }
                     val values = days.map { d -> snap.activeTransactions.filter { it.kind == com.hishab.app.domain.EntryKind.EXPENSE && it.date == d.toString() }.sumOf { it.amountPoisha } }
                     val max = values.maxOrNull()?.coerceAtLeast(1) ?: 1
+                    val barTrack = HishabTheme.colors.primarySoft
                     Row(Modifier.fillMaxWidth().height(130.dp).padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Bottom) {
                         days.forEachIndexed { i, d ->
                             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
                                 Canvas(Modifier.fillMaxWidth().weight(1f)) {
                                     val h = (size.height * values[i] / max).coerceAtLeast(2f)
-                                    drawRoundRect(if (i == days.lastIndex) colors[2] else HishabTheme.colors.primarySoft, topLeft = Offset(0f, size.height - h), size = Size(size.width, h), cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f, 8f))
+                                    drawRoundRect(if (i == days.lastIndex) colors[2] else barTrack, topLeft = Offset(0f, size.height - h), size = Size(size.width, h), cornerRadius = androidx.compose.ui.geometry.CornerRadius(8f, 8f))
                                 }
                                 Text(vm.digits(d.dayOfMonth.toString()), style = MaterialTheme.typography.labelSmall)
                             }

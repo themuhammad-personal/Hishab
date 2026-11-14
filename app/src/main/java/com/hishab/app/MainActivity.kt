@@ -66,7 +66,7 @@ fun HishabApp(vm: AppViewModel = viewModel()) {
                     }, modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp))
                 }
                 Spacer(Modifier.weight(1f))
-                Row(Modifier.padding(20.dp)) { Icon(Icons.Default.Shield, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp)); Column { Text("ডিভাইসে সংরক্ষিত", style = MaterialTheme.typography.titleSmall); Text("ক্লাউড সিঙ্ক এখন বন্ধ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+                Row(Modifier.padding(20.dp)) { Icon(Icons.Default.VerifiedUser, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(10.dp)); Column { Text("ডিভাইসে সংরক্ষিত", style = MaterialTheme.typography.titleSmall); Text("ক্লাউড সিঙ্ক এখন বন্ধ", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
             }
         }) {
             Scaffold(

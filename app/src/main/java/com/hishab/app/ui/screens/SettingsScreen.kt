@@ -75,7 +75,7 @@ fun SettingsScreen(vm: AppViewModel, state: UiState) {
                     HorizontalDivider(Modifier.padding(vertical = 12.dp), color = HishabTheme.colors.border)
                     Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.CloudOff, null); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)) { Text("Firebase সিঙ্ক", style = MaterialTheme.typography.titleSmall); Text("প্রজেক্ট যাচাইয়ের পর চালু হবে", style = MaterialTheme.typography.bodySmall, color = HishabTheme.colors.muted) }; Switch(checked = false, onCheckedChange = {}, enabled = false) }
                     HorizontalDivider(Modifier.padding(vertical = 12.dp), color = HishabTheme.colors.border)
-                    Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.Shield, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(12.dp)); Text("অ্যানালিটিক্স ও বিজ্ঞাপন SDK নেই; আর্থিক তথ্য ডিভাইসেই থাকে।", style = MaterialTheme.typography.bodySmall) }
+                    Row(verticalAlignment = Alignment.CenterVertically) { Icon(Icons.Default.VerifiedUser, null, tint = MaterialTheme.colorScheme.primary); Spacer(Modifier.width(12.dp)); Text("অ্যানালিটিক্স ও বিজ্ঞাপন SDK নেই; আর্থিক তথ্য ডিভাইসেই থাকে।", style = MaterialTheme.typography.bodySmall) }
                 }
             }
             Text("হিসাব ১.০.০ · অফলাইন-ফার্স্ট", style = MaterialTheme.typography.labelSmall, color = HishabTheme.colors.muted, modifier = Modifier.fillMaxWidth().padding(top = 16.dp), textAlign = androidx.compose.ui.text.style.TextAlign.Center)

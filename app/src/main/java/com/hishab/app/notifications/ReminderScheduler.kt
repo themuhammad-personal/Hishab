@@ -57,7 +57,7 @@ class DueReminderWorker(context: Context, params: WorkerParameters) : CoroutineW
         val notification = NotificationCompat.Builder(applicationContext, ReminderScheduler.CHANNEL)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("বাকি মনে করিয়ে দেওয়া")
-            .setContentText("$countটি বাকি · মোট ${Money.formatPoisha(total)}")
+            .setContentText("${count}টি বাকি · মোট ${Money.formatPoisha(total)}")
             .setStyle(NotificationCompat.BigTextStyle().bigText("আজ/আগামীকালের মধ্যে পরিশোধযোগ্য বাকি আছে। হিসাব অ্যাপে বিস্তারিত দেখুন।"))
             .setAutoCancel(true)
             .build()
