@@ -1,0 +1,29 @@
+.gradle/
+.kotlin/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Secrets / signing material must never be committed.
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+!.env.example
+google-services.json
+firebase-applet-config.json
+service-account*.json
+
+# Local review inputs and downloaded source archive.
+.arena/
+google_drive/
+
+# Node tooling used only for design previews.
+node_modules/

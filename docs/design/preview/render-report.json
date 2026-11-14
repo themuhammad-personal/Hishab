@@ -1,0 +1,52 @@
+{
+  "fontReady": {
+    "regular": true,
+    "semibold": true,
+    "bold": true,
+    "faces": [
+      {
+        "family": "Hind Siliguri",
+        "weight": "400",
+        "status": "loaded"
+      },
+      {
+        "family": "Hind Siliguri",
+        "weight": "500",
+        "status": "loaded"
+      },
+      {
+        "family": "Hind Siliguri",
+        "weight": "600",
+        "status": "loaded"
+      },
+      {
+        "family": "Hind Siliguri",
+        "weight": "700",
+        "status": "loaded"
+      }
+    ]
+  },
+  "overflow": [],
+  "pageErrors": [],
+  "externalRequests": [],
+  "screens": [
+    "home",
+    "entry",
+    "home-dark",
+    "dues",
+    "payment",
+    "wallets",
+    "budget",
+    "reports",
+    "drawer",
+    "ai",
+    "settings",
+    "empty"
+  ],
+  "boards": [
+    "01-daily",
+    "02-money",
+    "03-control",
+    "04-trust"
+  ]
+}

@@ -1,0 +1,73 @@
+name: Signed Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.0.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  signed-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HISHAB_KEYSTORE_BASE64: ${{ secrets.HISHAB_KEYSTORE_BASE64 }}
+      HISHAB_KEYSTORE_PASSWORD: ${{ secrets.HISHAB_KEYSTORE_PASSWORD }}
+      HISHAB_KEY_ALIAS: ${{ secrets.HISHAB_KEY_ALIAS }}
+      HISHAB_KEY_PASSWORD: ${{ secrets.HISHAB_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Require signing secrets
+        run: |
+          test -n "$HISHAB_KEYSTORE_BASE64" || { echo "Missing HISHAB_KEYSTORE_BASE64 secret"; exit 1; }
+          test -n "$HISHAB_KEYSTORE_PASSWORD" || { echo "Missing HISHAB_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "$HISHAB_KEY_ALIAS" || { echo "Missing HISHAB_KEY_ALIAS secret"; exit 1; }
+          test -n "$HISHAB_KEY_PASSWORD" || { echo "Missing HISHAB_KEY_PASSWORD secret"; exit 1; }
+      - name: Decode keystore
+        run: |
+          printf '%s' "$HISHAB_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/hishab-release.jks"
+          echo "HISHAB_KEYSTORE_PATH=$RUNNER_TEMP/hishab-release.jks" >> "$GITHUB_ENV"
+      - name: Test and build signed release
+        run: ./gradlew --no-daemon lintRelease testReleaseUnitTest assembleRelease
+      - name: Verify signature
+        run: |
+          APK=$(find app/build/outputs/apk/release -name '*.apk' | head -n1)
+          test -n "$APK"
+          "$ANDROID_HOME"/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n1)/apksigner verify --verbose "$APK"
+          cp "$APK" hishab-${{ github.ref_name }}-release.apk
+      - name: Checksum
+        run: sha256sum hishab-*-release.apk > SHA256SUMS.txt
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hishab-signed-release
+          path: |
+            hishab-*-release.apk
+            SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: Hishab ${{ github.event.inputs.tag || github.ref_name }}
+          files: |
+            hishab-*-release.apk
+            SHA256SUMS.txt
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+      - name: Cleanup keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/hishab-release.jks"
