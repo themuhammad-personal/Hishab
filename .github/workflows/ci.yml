@@ -29,6 +29,32 @@ jobs:
         run: |
           set -o pipefail
           ./gradlew --no-daemon --console=plain --stacktrace lintDebug testDebugUnitTest assembleDebug 2>&1 | tee gradle-ci.log
+      - name: Surface test and lint failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          def emit(msg):
+              msg = msg.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error::' + msg[:3500])
+          count = 0
+          for f in glob.glob('app/build/test-results/testDebugUnitTest/*.xml'):
+              try: root = ET.parse(f).getroot()
+              except Exception: continue
+              for tc in root.iter('testcase'):
+                  for fail in list(tc.findall('failure')) + list(tc.findall('error')):
+                      emit(f"{tc.get('classname')}.{tc.get('name')}: {fail.get('message','')}\n{(fail.text or '')[:1800]}")
+                      count += 1
+          for f in glob.glob('app/build/reports/lint-results-*.xml'):
+              try: root = ET.parse(f).getroot()
+              except Exception: continue
+              for issue in root.findall('issue'):
+                  if issue.get('severity') in ('Error','Fatal'):
+                      loc = issue.find('location')
+                      emit(f"lint {issue.get('id')}: {issue.get('message','')} @ {loc.get('file','') if loc is not None else ''}:{loc.get('line','') if loc is not None else ''}")
+                      count += 1
+          print(f'surfaced {count} test/lint failures')
+          PY
       - name: Surface build errors as annotations
         if: failure()
         run: |

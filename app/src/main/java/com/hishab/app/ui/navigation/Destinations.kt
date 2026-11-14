@@ -3,13 +3,14 @@
 package com.hishab.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 data class Destination(val route: String, val label: String, val icon: ImageVector)
 val drawerDestinations = listOf(
     Destination("home", "হোম", Icons.Default.Home),
-    Destination("transactions", "লেনদেন", Icons.Default.ReceiptLong),
+    Destination("transactions", "লেনদেন", Icons.AutoMirrored.Filled.ReceiptLong),
     Destination("categories", "ক্যাটাগরি", Icons.Default.Category),
     Destination("dues", "বাকির খাতা", Icons.Default.Schedule),
     Destination("todos", "কেনার তালিকা", Icons.Default.Checklist),
