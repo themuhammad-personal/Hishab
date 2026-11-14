@@ -26,10 +26,10 @@ fun PaymentSheetHost(vm: AppViewModel, sheet: Sheet.Payment) {
     val tx = state.snapshot.transactions.firstOrNull { it.id == sheet.txId } ?: return
     val remaining = state.snapshot.remaining(tx)
     val wallets = state.snapshot.activeWallets
-    var amount by rememberSaveable { mutableStateOf(Money.formatPoisha(remaining, false, false)) }
-    var walletId by rememberSaveable { mutableStateOf(wallets.firstOrNull()?.id ?: "") }
-    var date by rememberSaveable { mutableStateOf(Dates.today().toString()) }
-    var note by rememberSaveable { mutableStateOf("") }
+    var amount by rememberSaveable(sheet) { mutableStateOf(Money.formatPoisha(sheet.draft?.amountPoisha ?: remaining, false, false)) }
+    var walletId by rememberSaveable(sheet) { mutableStateOf(sheet.draft?.walletId ?: wallets.firstOrNull()?.id ?: "") }
+    var date by rememberSaveable(sheet) { mutableStateOf(sheet.draft?.date ?: Dates.today().toString()) }
+    var note by rememberSaveable(sheet) { mutableStateOf(sheet.draft?.let { "সহকারী থেকে নিশ্চিতকৃত" } ?: "") }
     var error by rememberSaveable { mutableStateOf<String?>(null) }
     var deletePayment by remember { mutableStateOf<String?>(null) }
     val parsed = Money.parsePoisha(amount)
@@ -37,10 +37,10 @@ fun PaymentSheetHost(vm: AppViewModel, sheet: Sheet.Payment) {
     val before = wallet?.let { state.snapshot.walletBalance(it.id) }
     ModalBottomSheet(onDismissRequest = vm::closeSheet, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 28.dp)) {
-            SheetTitle("বাকি পরিশোধ", "${tx.shopOrPerson ?: tx.title} · বাকি ${vm.money(remaining)}")
+            SheetTitle(if (tx.kind == com.hishab.app.domain.EntryKind.EXPENSE) "বাকি পরিশোধ" else "পাওনা গ্রহণ", "${tx.shopOrPerson ?: tx.title} · বাকি ${vm.money(remaining)}")
             LabeledField("এখন কত পরিশোধ করবেন?") { OutlinedTextField(value = amount, onValueChange = { amount = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, textStyle = MaterialTheme.typography.headlineSmall, prefix = { Text("৳") }) }
-            LabeledField("কোন ওয়ালেট থেকে") { OptionPicker("ওয়ালেট", walletId, wallets.map { it.id to it.name }, { walletId = it }) }
-            LabeledField("তারিখ") { DateField(date, { date = it }) }
+            LabeledField(if (tx.kind == com.hishab.app.domain.EntryKind.EXPENSE) "কোন ওয়ালেট থেকে" else "কোন ওয়ালেটে জমা হবে") { OptionPicker("ওয়ালেট", walletId, wallets.map { it.id to it.name }, { walletId = it }) }
+            LabeledField("তারিখ") { DateField(date, { date = it }, bengaliDigits = state.settings.bengaliDigits) }
             LabeledField("নোট") { OutlinedTextField(value = note, onValueChange = { note = it }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             if (parsed != null && wallet != null && before != null && parsed in 1..remaining) {
                 Surface(color = HishabTheme.colors.primarySoft, shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {

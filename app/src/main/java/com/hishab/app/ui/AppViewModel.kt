@@ -13,10 +13,13 @@ import com.hishab.app.core.Dates
 import com.hishab.app.data.repository.BackupPreview
 import com.hishab.app.data.repository.LedgerSnapshot
 import com.hishab.app.data.settings.AppSettings
+import com.hishab.app.domain.Accounting
+import com.hishab.app.domain.BudgetWarning
 import com.hishab.app.domain.EntryKind
 import com.hishab.app.domain.ThemeMode
 import com.hishab.app.domain.TodoPriority
 import com.hishab.app.ui.sheets.Sheet
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -48,6 +51,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun closeSheet() { _sheet.value = null }
     private val _events = Channel<AppEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
+    private val budgetWarningLevels = mutableMapOf<String, BudgetWarning>()
     val state: StateFlow<UiState> = combine(container.settings.settings, container.ledger.snapshot, month) { s, snap, m ->
         UiState(s, snap, m, false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), UiState())
@@ -71,6 +75,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun run(action: suspend () -> Unit, success: String? = null, undo: (() -> Unit)? = null) {
         viewModelScope.launch {
             try { action(); success?.let { _events.send(AppEvent(it, undo)) } }
+            catch (e: CancellationException) { throw e }
             catch (e: Exception) { _events.send(AppEvent(e.message ?: "কাজটি সম্পন্ন হয়নি")) }
         }
     }
@@ -85,13 +90,16 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun updateTransaction(id: String, edit: (com.hishab.app.data.local.TransactionEntity) -> com.hishab.app.data.local.TransactionEntity) = run({ ledger.updateTransaction(id, edit) }, "লেনদেন আপডেট হয়েছে")
     fun deleteTransaction(id: String) = run({ ledger.softDeleteTransaction(id) }, "লেনদেন মুছে ফেলা হয়েছে", undo = { run({ ledger.restoreTransaction(id) }, "লেনদেন ফিরিয়ে আনা হয়েছে") })
     fun addPayment(txId: String, walletId: String, amount: Long, date: String, note: String?) = run({ ledger.addPayment(txId, walletId, amount, date, note) }, "পরিশোধ সংরক্ষণ হয়েছে")
-    fun deletePayment(id: String) = run({ ledger.deletePayment(id) }, "পরিশোধ মুছে ফেলা হয়েছে")
+    fun deletePayment(id: String) {
+        val payment = state.value.snapshot.payments.firstOrNull { it.id == id }
+        run({ ledger.deletePayment(id) }, "পরিশোধ মুছে ফেলা হয়েছে", undo = payment?.let { p -> { run({ ledger.restorePayment(p) }, "পরিশোধ ফিরিয়ে আনা হয়েছে") } })
+    }
     fun saveWallet(id: String?, name: String, type: String, opening: Long, color: String, icon: String) = run({ ledger.saveWallet(id, name, type, opening, color, icon) }, "ওয়ালেট সংরক্ষণ হয়েছে")
-    fun archiveWallet(id: String, archived: Boolean) = run({ ledger.archiveWallet(id, archived) }, if (archived) "ওয়ালেট আর্কাইভ হয়েছে" else "ওয়ালেট সক্রিয় হয়েছে")
+    fun archiveWallet(id: String, archived: Boolean) = run({ ledger.archiveWallet(id, archived) }, if (archived) "ওয়ালেট আর্কাইভ হয়েছে" else "ওয়ালেট সক্রিয় হয়েছে", undo = { run({ ledger.archiveWallet(id, !archived) }, "ওয়ালেটের অবস্থা ফিরিয়ে আনা হয়েছে") })
     fun addTransfer(from: String, to: String, amount: Long, date: String, note: String?) = run({ ledger.addTransfer(from, to, amount, date, note) }, "স্থানান্তর সংরক্ষণ হয়েছে")
     fun deleteTransfer(id: String) = run({ ledger.softDeleteTransfer(id) }, "স্থানান্তর মুছে ফেলা হয়েছে", undo = { run({ ledger.restoreTransfer(id) }, "স্থানান্তর ফিরিয়ে আনা হয়েছে") })
     fun saveCategory(id: String?, name: String, kind: EntryKind, color: String, icon: String, sort: Int) = run({ ledger.saveCategory(id, name, kind, color, icon, sort) }, "ক্যাটাগরি সংরক্ষণ হয়েছে")
-    fun archiveCategory(id: String, archived: Boolean) = run({ ledger.archiveCategory(id, archived) }, if (archived) "ক্যাটাগরি আর্কাইভ হয়েছে" else "ক্যাটাগরি সক্রিয় হয়েছে")
+    fun archiveCategory(id: String, archived: Boolean) = run({ ledger.archiveCategory(id, archived) }, if (archived) "ক্যাটাগরি আর্কাইভ হয়েছে" else "ক্যাটাগরি সক্রিয় হয়েছে", undo = { run({ ledger.archiveCategory(id, !archived) }, "ক্যাটাগরির অবস্থা ফিরিয়ে আনা হয়েছে") })
     fun saveTodo(id: String?, title: String, qty: Long?, unit: String?, estimated: Long?, category: String, priority: TodoPriority, due: String?) = run({ ledger.saveTodo(id, title, qty, unit, estimated, category, priority, due) }, "তালিকা সংরক্ষণ হয়েছে")
     fun toggleTodo(id: String) = run({ ledger.toggleTodo(id) })
     fun deleteTodo(id: String) = run({ ledger.softDeleteTodo(id) }, "তালিকা মুছে ফেলা হয়েছে", undo = { run({ ledger.restoreTodo(id) }, "তালিকা ফিরিয়ে আনা হয়েছে") })
@@ -107,13 +115,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
     fun clearDraft() { _draft.value = null }
     fun confirmDraft(draft: AssistantDraft) {
+        // Consume the draft before launching the write so a double tap cannot execute it twice.
+        if (!_draft.compareAndSet(draft, null)) return
         when (draft) {
             is AssistantDraft.AddTransaction -> addTransaction(draft.kind, draft.title, draft.amountPoisha, draft.categoryId, draft.walletId, draft.date, draft.paid, if (draft.paid) null else draft.date, null, null, null, null, null)
             is AssistantDraft.PayDue -> addPayment(draft.transactionId, draft.walletId, draft.amountPoisha, draft.date, "সহকারী থেকে নিশ্চিতকৃত")
             is AssistantDraft.DeleteTransaction -> deleteTransaction(draft.transactionId)
         }
         _chat.value = _chat.value + ChatMessage("assistant", "নিশ্চিতকরণ পাওয়া গেছে; কাজটি সম্পন্ন হলে বার্তা দেখাবে।")
-        _draft.value = null
     }
 
     fun exportJson(uri: Uri) = run({
@@ -128,9 +137,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }, "CSV এক্সপোর্ট হয়েছে")
     fun readBackup(uri: Uri): BackupPreview? {
         return try {
-            val text = getApplication<HishabApplication>().contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: error("ফাইল পড়া যায়নি")
+            val text = getApplication<HishabApplication>().contentResolver.openInputStream(uri)?.use { backup.readBounded(it) } ?: error("ফাইল পড়া যায়নি")
             backup.parse(text)
         } catch (e: Exception) { viewModelScope.launch { _events.send(AppEvent(e.message ?: "ব্যাকআপ পড়া যায়নি")) }; null }
     }
-    fun importBackup(preview: BackupPreview, replace: Boolean) = run({ backup.import(preview, replace) }, "ব্যাকআপ রিস্টোর হয়েছে")
+    fun importBackup(preview: BackupPreview, replace: Boolean) = run({
+        backup.import(preview, replace)
+        budgetWarningLevels.clear()
+        container.reminders.schedule(preview.document.settings.remindersEnabled)
+    }, "ব্যাকআপ রিস্টোর হয়েছে")
 }

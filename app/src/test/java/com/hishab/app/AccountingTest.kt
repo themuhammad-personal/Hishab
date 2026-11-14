@@ -8,7 +8,7 @@ import org.junit.Test
 class AccountingTest {
     private val ts = 0L
     private fun tx(id: String, kind: EntryKind, amount: Long, paid: Long, date: String = "2026-11-14", due: DueDirection? = null) =
-        TransactionEntity(id, kind, id, amount, paid, "cat", "w1", date, due, null, null, null, null, null, null, ts, ts)
+        TransactionEntity(id = id, kind = kind, title = id, amountPoisha = amount, paidPoisha = paid, categoryId = "cat", walletId = "w1", date = date, dueDirection = due, dueDate = if (due != null) date else null, createdAt = ts, updatedAt = ts)
     private fun pay(id: String, tx: String, amount: Long, wallet: String = "w1") = DuePaymentEntity(id, tx, wallet, amount, "2026-11-14", null, ts)
     private val wallets = listOf(WalletEntity("w1", "cash", "cash", 90000, "", "", false, ts, ts), WalletEntity("w2", "bank", "bank", 0, "", "", false, ts, ts))
 

@@ -3,6 +3,7 @@
 package com.hishab.app.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -54,6 +55,7 @@ fun AssistantScreen(vm: AppViewModel) {
                             Row(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 OutlinedButton(onClick = vm::clearDraft, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("বাতিল") }
                                 if (d is AssistantDraft.AddTransaction) OutlinedButton(onClick = { vm.openSheet(Sheet.Entry(draft = d)); vm.clearDraft() }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp)); Text("সম্পাদনা") }
+                                if (d is AssistantDraft.PayDue) OutlinedButton(onClick = { vm.openSheet(Sheet.Payment(d.transactionId, d)); vm.clearDraft() }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Icon(Icons.Default.Edit, null, modifier = Modifier.size(16.dp)); Text("সম্পাদনা") }
                                 Button(onClick = { if (d is AssistantDraft.DeleteTransaction) confirmDelete = d else vm.confirmDraft(d) }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text("নিশ্চিত") }
                             }
                         }
@@ -62,7 +64,7 @@ fun AssistantScreen(vm: AppViewModel) {
             }
         }
         Surface(tonalElevation = 3.dp, modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
-            Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.imePadding().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(input, { input = it }, modifier = Modifier.weight(1f), placeholder = { Text("হিসাব লিখুন…") }, maxLines = 3)
                 Spacer(Modifier.width(8.dp))
                 FilledIconButton(onClick = { vm.sendAssistant(input); input = "" }, modifier = Modifier.size(52.dp)) { Icon(Icons.AutoMirrored.Filled.Send, "পাঠান") }

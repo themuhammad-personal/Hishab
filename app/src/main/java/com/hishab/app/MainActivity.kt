@@ -75,7 +75,7 @@ fun HishabApp(vm: AppViewModel = viewModel()) {
                 floatingActionButton = {
                     when {
                         route == "home" || route == "transactions" || route?.startsWith("category/") == true -> ExtendedFloatingActionButton(onClick = { vm.openSheet(Sheet.Entry()) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("নতুন হিসাব") }
-                        route == "dues" -> ExtendedFloatingActionButton(onClick = { vm.openSheet(Sheet.Entry()) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("নতুন বাকি") }
+                        route == "dues" -> ExtendedFloatingActionButton(onClick = { vm.openSheet(Sheet.Entry(paid = false)) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("নতুন বাকি") }
                         route == "wallets" -> ExtendedFloatingActionButton(onClick = { vm.openSheet(Sheet.Wallet()) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("নতুন ওয়ালেট") }
                         route == "todos" -> ExtendedFloatingActionButton(onClick = { vm.openSheet(Sheet.Todo()) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("নতুন তালিকা") }
                     }

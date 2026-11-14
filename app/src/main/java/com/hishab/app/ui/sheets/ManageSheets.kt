@@ -98,7 +98,7 @@ fun TodoSheetHost(vm: AppViewModel, sheet: Sheet.Todo) {
             LabeledField("আনুমানিক দাম") { OutlinedTextField(estimated, { estimated = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, prefix = { Text("৳") }) }
             LabeledField("ক্যাটাগরি") { OptionPicker("ক্যাটাগরি", category, categories.map { it.id to it.name }, { category = it }) }
             LabeledField("অগ্রাধিকার") { OptionPicker("অগ্রাধিকার", priority.name, TodoPriority.entries.map { it.name to when (it) { TodoPriority.LOW -> "কম"; TodoPriority.NORMAL -> "সাধারণ"; TodoPriority.HIGH -> "বেশি" } }, { priority = TodoPriority.valueOf(it) }) }
-            LabeledField("তারিখ (ঐচ্ছিক)") { if (due.isBlank()) OutlinedButton(onClick = { due = Dates.today().toString() }, modifier = Modifier.fillMaxWidth()) { Text("তারিখ যোগ করুন") } else DateField(due, { due = it }) }
+            LabeledField("তারিখ (ঐচ্ছিক)") { if (due.isBlank()) OutlinedButton(onClick = { due = Dates.today().toString() }, modifier = Modifier.fillMaxWidth()) { Text("তারিখ যোগ করুন") } else DateField(due, { due = it }, bengaliDigits = state.settings.bengaliDigits) }
             ErrorText(error)
             SheetActions(vm::closeSheet, {
                 val q = if (qty.isBlank()) null else Money.parseQuantityMilli(qty)
@@ -126,7 +126,7 @@ fun TransferSheetHost(vm: AppViewModel) {
             LabeledField("যেখান থেকে") { OptionPicker("ওয়ালেট", from, wallets.map { it.id to it.name }, { from = it }) }
             LabeledField("যেখানে") { OptionPicker("ওয়ালেট", to, wallets.map { it.id to it.name }, { to = it }) }
             LabeledField("পরিমাণ") { OutlinedTextField(amount, { amount = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, prefix = { Text("৳") }) }
-            LabeledField("তারিখ") { DateField(date, { date = it }) }
+            LabeledField("তারিখ") { DateField(date, { date = it }, bengaliDigits = state.settings.bengaliDigits) }
             LabeledField("নোট") { OutlinedTextField(note, { note = it }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             ErrorText(error)
             SheetActions(vm::closeSheet, { val a = Money.parsePoisha(amount); when { a == null || a <= 0 -> error = "সঠিক পরিমাণ দিন"; from == to -> error = "ভিন্ন ওয়ালেট নির্বাচন করুন"; else -> { vm.addTransfer(from, to, a, date, note.ifBlank { null }); vm.closeSheet() } } })

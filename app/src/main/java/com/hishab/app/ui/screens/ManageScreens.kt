@@ -72,7 +72,7 @@ fun DuesScreen(vm: AppViewModel, state: UiState) {
                 listOf("দেনা", "পাওনা", "সব").forEachIndexed { i, label -> SegmentedButton(selected = tab == i, onClick = { tab = i }, shape = SegmentedButtonDefaults.itemShape(i, 3)) { Text(label) } }
             }
         }
-        if (shown.isEmpty()) item { EmptyState("কোনো বাকি নেই", "বাকি হিসাব যোগ করলে এখানে দেখাবে।", "বাকি যোগ করুন") { vm.openSheet(Sheet.Entry()) } }
+        if (shown.isEmpty()) item { EmptyState("কোনো বাকি নেই", "বাকি হিসাব যোগ করলে এখানে দেখাবে।", "বাকি যোগ করুন") { vm.openSheet(Sheet.Entry(paid = false)) } }
         items(shown, key = { it.id }) { tx ->
             val remaining = snap.remaining(tx)
             val percent = if (tx.amountPoisha == 0L) 0 else ((tx.paidPoisha * 100) / tx.amountPoisha).toInt()
@@ -132,6 +132,21 @@ fun WalletsScreen(vm: AppViewModel, state: UiState) {
                 }
             }
         }
+        val transfers = snap.transfers.filter { it.deletedAt == null }.sortedByDescending { it.date }.take(20)
+        if (transfers.isNotEmpty()) {
+            item { SectionHeader("সাম্প্রতিক স্থানান্তর") }
+            items(transfers, key = { it.id }) { tr ->
+                Surface(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("${snap.wallets.firstOrNull { it.id == tr.fromWalletId }?.name ?: "?"} → ${snap.wallets.firstOrNull { it.id == tr.toWalletId }?.name ?: "?"}", style = MaterialTheme.typography.titleSmall)
+                            Text("${Dates.formatDate(tr.date, state.settings.bengaliDigits)} · ${vm.money(tr.amountPoisha)}", style = MaterialTheme.typography.bodySmall, color = HishabTheme.colors.muted)
+                        }
+                        IconButton(onClick = { vm.deleteTransfer(tr.id) }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Delete, "স্থানান্তর মুছুন", tint = HishabTheme.colors.rose) }
+                    }
+                }
+            }
+        }
         item {
             OutlinedButton(onClick = { vm.openSheet(Sheet.Transfer) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 52.dp)) { Icon(Icons.Default.SwapHoriz, null); Spacer(Modifier.width(8.dp)); Text("ওয়ালেট স্থানান্তর") }
             Button(onClick = { vm.openSheet(Sheet.Wallet()) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp).heightIn(min = 52.dp)) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("নতুন ওয়ালেট") }
@@ -148,7 +163,7 @@ fun TodosScreen(vm: AppViewModel, state: UiState) {
         items(todos, key = { it.id }) { t ->
             Surface(shape = MaterialTheme.shapes.large, modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                 Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(checked = t.done, onCheckedChange = { vm.toggleTodo(t.id) }, modifier = Modifier.size(48.dp))
+                    Checkbox(checked = t.done, onCheckedChange = { vm.toggleTodo(t.id) }, enabled = t.convertedTransactionId == null, modifier = Modifier.size(48.dp))
                     Column(Modifier.weight(1f)) { Text(t.title, style = MaterialTheme.typography.titleSmall); Text(buildString { append(snap.categories.firstOrNull { it.id == t.targetCategoryId }?.name ?: ""); t.estimatedPoisha?.let { append(" · ${vm.money(it)}") }; t.dueDate?.let { append(" · ${Dates.formatDate(it, state.settings.bengaliDigits)}") } }, style = MaterialTheme.typography.bodySmall, color = HishabTheme.colors.muted) }
                     if (!t.done && t.convertedTransactionId == null) IconButton(onClick = { vm.openSheet(Sheet.Entry(todoId = t.id)) }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.ShoppingCart, "খরচে রূপান্তর") }
                     IconButton(onClick = { vm.openSheet(Sheet.Todo(t.id)) }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Edit, "সম্পাদনা") }

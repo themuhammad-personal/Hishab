@@ -68,12 +68,14 @@ fun TransactionsScreen(vm: AppViewModel, state: UiState, categoryId: String? = n
             }
         }
         if (txs.isEmpty()) item { EmptyState("কোনো লেনদেন নেই", "ফিল্টার বদলান অথবা নতুন হিসাব যোগ করুন।", "নতুন হিসাব") { vm.openSheet(Sheet.Entry(kind = if (category?.kind == EntryKind.INCOME) EntryKind.INCOME else EntryKind.EXPENSE)) } }
-        items(txs, key = { it.id }) { tx ->
-            val cat = snap.categories.firstOrNull { it.id == tx.categoryId }
-            Text(Dates.formatDate(tx.date, state.settings.bengaliDigits), style = MaterialTheme.typography.labelMedium, color = HishabTheme.colors.muted, modifier = Modifier.padding(top = 12.dp))
-            SwipeableTransactionRow(tx, cat?.name ?: "", cat?.icon ?: "more", snap.wallets.firstOrNull { it.id == tx.walletId }?.name, vm.money(tx.amountPoisha), state.settings.bengaliDigits,
-                onEdit = { vm.openSheet(Sheet.Entry(tx.id)) }, onDelete = { vm.deleteTransaction(tx.id) }, onClick = { vm.openSheet(Sheet.Entry(tx.id)) })
-            HorizontalDivider(color = HishabTheme.colors.border)
+        txs.groupBy { it.date }.toSortedMap(reverseOrder()).forEach { (date, group) ->
+            item(key = "header-$date") { Text(Dates.relativeLabel(date, bengaliDigits = state.settings.bengaliDigits), style = MaterialTheme.typography.labelMedium, color = HishabTheme.colors.muted, modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)) }
+            items(group, key = { it.id }) { tx ->
+                val cat = snap.categories.firstOrNull { it.id == tx.categoryId }
+                SwipeableTransactionRow(tx, cat?.name ?: "", cat?.icon ?: "more", snap.wallets.firstOrNull { it.id == tx.walletId }?.name, vm.money(tx.amountPoisha), state.settings.bengaliDigits,
+                    onEdit = { vm.openSheet(Sheet.Entry(tx.id)) }, onDelete = { vm.deleteTransaction(tx.id) }, onClick = { vm.openSheet(Sheet.Entry(tx.id)) })
+                HorizontalDivider(color = HishabTheme.colors.border)
+            }
         }
     }
 }

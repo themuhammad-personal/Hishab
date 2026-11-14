@@ -6,8 +6,8 @@ import com.hishab.app.ai.AssistantDraft
 import com.hishab.app.domain.EntryKind
 
 sealed interface Sheet {
-    data class Entry(val txId: String? = null, val kind: EntryKind = EntryKind.EXPENSE, val todoId: String? = null, val draft: AssistantDraft.AddTransaction? = null) : Sheet
-    data class Payment(val txId: String) : Sheet
+    data class Entry(val txId: String? = null, val kind: EntryKind = EntryKind.EXPENSE, val todoId: String? = null, val draft: AssistantDraft.AddTransaction? = null, val paid: Boolean = true) : Sheet
+    data class Payment(val txId: String, val draft: AssistantDraft.PayDue? = null) : Sheet
     data class Wallet(val id: String? = null) : Sheet
     data class Category(val id: String? = null) : Sheet
     data class Todo(val id: String? = null) : Sheet

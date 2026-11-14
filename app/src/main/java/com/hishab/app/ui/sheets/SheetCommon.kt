@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
@@ -37,7 +39,7 @@ fun OptionPicker(label: String, value: String, options: List<Pair<String, String
         Text(options.firstOrNull { it.first == value }?.second ?: value, modifier = Modifier.weight(1f))
     }
     if (open) AlertDialog(onDismissRequest = { open = false }, title = { Text(label) }, text = {
-        Column(Modifier.heightIn(max = 360.dp)) {
+        Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
             options.forEach { (id, name) ->
                 TextButton(onClick = { onChange(id); open = false }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(name, modifier = Modifier.weight(1f)); if (id == value) Icon(Icons.Default.Check, null)
@@ -48,11 +50,11 @@ fun OptionPicker(label: String, value: String, options: List<Pair<String, String
 }
 
 @Composable
-fun DateField(value: String, onChange: (String) -> Unit, label: String = "তারিখ") {
+fun DateField(value: String, onChange: (String) -> Unit, label: String = "তারিখ", bengaliDigits: Boolean = true) {
     var open by remember { mutableStateOf(false) }
     OutlinedButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp), shape = MaterialTheme.shapes.medium) {
         Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(18.dp)); Spacer(Modifier.width(8.dp))
-        Text(Dates.formatDate(value), modifier = Modifier.weight(1f))
+        Text(Dates.formatDate(value, bengaliDigits), modifier = Modifier.weight(1f))
     }
     if (open) {
         val initial = Dates.parseDate(value) ?: Dates.today()
@@ -66,10 +68,14 @@ fun DateField(value: String, onChange: (String) -> Unit, label: String = "তা
 @Composable
 fun ColorPicker(value: String, onChange: (String) -> Unit) {
     val colors = listOf("#145443", "#2F628A", "#C99B48", "#A83E3E", "#7A5518", "#5F6F65", "#6B4FA0", "#0F766E")
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        colors.forEach { c ->
-            FilterChip(selected = value.equals(c, true), onClick = { onChange(c) }, label = { Text(" ") }, modifier = Modifier.size(40.dp),
-                colors = FilterChipDefaults.filterChipColors(selectedContainerColor = IconRegistry.parseColor(c), selectedLabelColor = IconRegistry.parseColor(c)))
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        colors.chunked(4).forEach { row ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { c ->
+                    FilterChip(selected = value.equals(c, true), onClick = { onChange(c) }, label = { Text(" ") }, modifier = Modifier.size(48.dp),
+                        colors = FilterChipDefaults.filterChipColors(selectedContainerColor = IconRegistry.parseColor(c), selectedLabelColor = IconRegistry.parseColor(c)))
+                }
+            }
         }
     }
 }

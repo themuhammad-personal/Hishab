@@ -7,8 +7,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -58,8 +63,14 @@ fun TransactionRow(tx: TransactionEntity, categoryName: String, categoryIcon: St
                 MoneyText(amount, color = if (tx.kind == EntryKind.INCOME) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
                 Text(when (status) { PaymentStatus.PAID -> if (tx.kind == EntryKind.INCOME) "প্রাপ্ত" else "পরিশোধিত"; PaymentStatus.PARTIAL -> "আংশিক"; PaymentStatus.UNPAID -> "বাকি" }, style = MaterialTheme.typography.labelSmall, color = if (status == PaymentStatus.PAID) HishabTheme.colors.muted else HishabTheme.colors.rose)
             }
-            IconButton(onClick = onEdit, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Edit, contentDescription = "সম্পাদনা", modifier = Modifier.size(18.dp)) }
-            IconButton(onClick = onDelete, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.Delete, contentDescription = "মুছুন", modifier = Modifier.size(18.dp), tint = HishabTheme.colors.rose) }
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(48.dp)) { Icon(Icons.Default.MoreVert, contentDescription = "লেনদেনের কাজ") }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(text = { Text("সম্পাদনা") }, leadingIcon = { Icon(Icons.Default.Edit, null) }, onClick = { menuOpen = false; onEdit() })
+                    DropdownMenuItem(text = { Text("মুছুন") }, leadingIcon = { Icon(Icons.Default.Delete, null, tint = HishabTheme.colors.rose) }, onClick = { menuOpen = false; onDelete() })
+                }
+            }
         }
     }
 }

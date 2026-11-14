@@ -38,7 +38,7 @@ fun EntrySheetHost(vm: AppViewModel, sheet: Sheet.Entry) {
     val wallets = snap.activeWallets
     var walletId by rememberSaveable(sheet) { mutableStateOf(existing?.walletId ?: draft?.walletId ?: wallets.firstOrNull()?.id ?: "") }
     var date by rememberSaveable(sheet) { mutableStateOf(existing?.date ?: draft?.date ?: Dates.today().toString()) }
-    var paid by rememberSaveable(sheet) { mutableStateOf(existing?.let { it.paidPoisha >= it.amountPoisha } ?: draft?.paid ?: true) }
+    var paid by rememberSaveable(sheet) { mutableStateOf(existing?.let { it.paidPoisha >= it.amountPoisha } ?: draft?.paid ?: sheet.paid) }
     var dueDate by rememberSaveable(sheet) { mutableStateOf(existing?.dueDate ?: draft?.date ?: Dates.today().plusDays(7).toString()) }
     var shop by rememberSaveable(sheet) { mutableStateOf(existing?.shopOrPerson ?: "") }
     var expanded by rememberSaveable(sheet) { mutableStateOf(false) }
@@ -48,7 +48,7 @@ fun EntrySheetHost(vm: AppViewModel, sheet: Sheet.Entry) {
     var note by rememberSaveable(sheet) { mutableStateOf(existing?.note ?: "") }
     var error by rememberSaveable(sheet) { mutableStateOf<String?>(null) }
     val editing = existing != null
-    val lockedPayment = editing && existing!!.paidPoisha > 0
+    val lockedPayment = editing
 
     ModalBottomSheet(onDismissRequest = vm::closeSheet, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 28.dp)) {
@@ -63,7 +63,9 @@ fun EntrySheetHost(vm: AppViewModel, sheet: Sheet.Entry) {
             LabeledField("টাকার পরিমাণ") { OutlinedTextField(value = amount, onValueChange = { amount = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, textStyle = MaterialTheme.typography.headlineSmall, prefix = { Text("৳") }) }
             LabeledField("শিরোনাম") { OutlinedTextField(value = title, onValueChange = { title = it }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             LabeledField("ক্যাটাগরি") { OptionPicker("ক্যাটাগরি", categoryId, categories.map { it.id to it.name }, { categoryId = it }) }
-            if (!lockedPayment) {
+            if (lockedPayment) {
+                Text("পরিশোধের অবস্থা বা ওয়ালেট বদলাতে লেনদেনের ইতিহাস / পরিশোধ ব্যবহার করুন।", style = MaterialTheme.typography.bodySmall, color = HishabTheme.colors.muted, modifier = Modifier.padding(top = 8.dp))
+            } else {
                 LabeledField("ওয়ালেট") { OptionPicker("ওয়ালেট", walletId, wallets.map { it.id to it.name }, { walletId = it }) }
                 LabeledField("পরিশোধের অবস্থা") {
                     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -72,9 +74,9 @@ fun EntrySheetHost(vm: AppViewModel, sheet: Sheet.Entry) {
                     }
                 }
             }
-            LabeledField("তারিখ") { DateField(date, { date = it }) }
-            if (!paid && !lockedPayment) {
-                LabeledField("বাকির তারিখ") { DateField(dueDate, { dueDate = it }) }
+            LabeledField("তারিখ") { DateField(date, { date = it }, bengaliDigits = state.settings.bengaliDigits) }
+            if (!paid) {
+                LabeledField("বাকির তারিখ") { DateField(dueDate, { dueDate = it }, bengaliDigits = state.settings.bengaliDigits) }
                 LabeledField("দোকান / ব্যক্তি") { OutlinedTextField(value = shop, onValueChange = { shop = it }, modifier = Modifier.fillMaxWidth(), singleLine = true) }
             }
             TextButton(onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(if (expanded) "বিস্তারিত লুকান" else "বিস্তারিত তথ্য") }
