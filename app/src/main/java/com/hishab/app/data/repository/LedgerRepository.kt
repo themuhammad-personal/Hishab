@@ -188,7 +188,7 @@ class LedgerRepository(
     private suspend fun recalculatePaid(txId: String) {
         db.transactions().get(txId)?.let { tx ->
             val paid = db.payments().forTransaction(txId).sumOf { it.amountPoisha }
-            db.transactions().upsert(tx.copy(paidPoisha = paid, updatedAt = now()))
+            db.transactions().upsert(withDueDefaults(tx.copy(paidPoisha = paid, updatedAt = now()), paid))
         }
     }
 
@@ -286,6 +286,9 @@ class LedgerRepository(
         }
         settings.markInitialized()
     }
+
+    private fun withDueDefaults(tx: TransactionEntity, paid: Long): TransactionEntity =
+        if (paid < tx.amountPoisha && tx.dueDirection == null) tx.copy(dueDirection = directionFor(tx.kind), dueDate = tx.dueDate ?: tx.date) else tx
 
     private fun directionFor(kind: EntryKind): DueDirection = if (kind == EntryKind.EXPENSE) DueDirection.PAYABLE else DueDirection.RECEIVABLE
 
