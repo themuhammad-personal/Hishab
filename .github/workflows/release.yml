@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   signed-apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       HISHAB_KEYSTORE_BASE64: ${{ secrets.HISHAB_KEYSTORE_BASE64 }}
